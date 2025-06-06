@@ -1,0 +1,44 @@
+// Google Sheets Script for One-Way Time-In Logging
+var SS = SpreadsheetApp.openById('your sheet id');
+var timezone = "Asia/Kolkata";
+
+function doPost(e) {
+  var parsedData;
+
+  try {
+    parsedData = JSON.parse(e.postData.contents);
+  } catch (f) {
+    return ContentService.createTextOutput("Error parsing request: " + f.message);
+  }
+
+  if (!parsedData) {
+    return ContentService.createTextOutput("Error! Empty or invalid data.");
+  }
+
+  var sheet = SS.getSheetByName(parsedData.sheet_name);
+  if (!sheet) {
+    return ContentService.createTextOutput("Error! Sheet not found.");
+  }
+
+  var dataArr = parsedData.values.split(",");
+  var student_id = dataArr[0];
+  var first_name = dataArr[1];
+  var house_name = dataArr[2];
+
+  var Curr_Date = Utilities.formatDate(new Date(), timezone, "dd/MM/yyyy");
+  var Curr_Time = Utilities.formatDate(new Date(), timezone, "hh:mm:ss a");
+
+  if (parsedData.command === "insert_row") {
+    sheet.insertRowBefore(2); // insert just below header
+    sheet.getRange('D2').setValue(student_id);    // Student ID
+    sheet.getRange('F2').setValue(Curr_Time);     // Time In
+    sheet.getRange('G2').setValue(first_name);    // Name
+    sheet.getRange('H2').setValue(Curr_Date);     // Date
+    sheet.getRange('J2').setValue(house_name);    // House
+
+    SpreadsheetApp.flush();
+    return ContentService.createTextOutput("Success");
+  }
+
+  return ContentService.createTextOutput("Invalid command.");
+}
